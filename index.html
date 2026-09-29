@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<hmtl land="en"
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <title>Site Attendence</title>
+    <link rel="stylesheet" href="style.css"
+    <!-- HTML5 QR Code Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+
+    <div class="app-container"
+
+        <!----> Header --
+        <div class="app-header">
+            <h1>Site Attendence</h1>
+            <p id="app-subtitle">Enter your PIN to check in</p>
+        </div>
+
+        <div class="keypad">
+            <button class="key" onclick="pressKey('1')">1</button>
+            <button class="key" onclick="pressKey('2')">2</button>
+            <button class="key" onclick="pressKey('3')">3</button>
+            <button class="key" onclick="pressKey('4')">4</button>
+            <button class="key" onclick="pressKey('5')">5</button>
+            <button class="key" onclick="pressKey('6')">6</button>
+            <button class="key" onclick="pressKey('7')">7</button>
+            <button class="key" onclick="pressKey('8')">8</button>
+            <button class="key" onclick="pressKey('9')">9</button>
+            <button class="key" action-key" onclick="clearPin()">C</button>
+            <button class="key" onclick="pressKey('0')">0</button>
+            <button class="key" action-key" onclick="submitPin()">√</button>
+        </div>
+        <p id="pin-error" class="error-msg"><</p>
+    </div>
+
+    <!-- Screen 2: Action Selection & Scanner Screen -->
+    <div id="scanner-screen" class="screen-card hidden">
+        <div class="user-badge">
+            <span id="contractor-greeting">PIN Verified</span>
+        </div>
+
+        <!-- Action Mode Selection-->
+        <div class="action-toggle">
+            <button id="btn-in" class="toggle-btn active" onclick="setAction('Check-In')">Check In</button>
+            <button id="btn-out" class="toggle-btn" onclick="setAction('Check-Out')">Check Out</button>
+        </div>
+
+        <p class="scan-instructions">Align site QR code inside frame</p>
+
+        <!-- Camera Reader Box -->
+        <div id="qr-reader"></div>
+
+        <div id="status-card" class="status-card hidden">
+            <p id="status-text">Processing check-in...</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

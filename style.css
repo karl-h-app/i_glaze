@@ -1,0 +1,125 @@
+css
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+    background-color: #0f172a;
+    color: #f8fafc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 380px;
+    background: #1e293b;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    color: #ffffff;
+}
+
+.app-header p {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+,screen-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.hidden (display: none !important; }
+
+/* PIN Pad Styling */
+.pin-display {
+    background: #0f172a;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.dots {
+    font-size: 2rem;
+    letter-spacing: 12px;
+    color: #38bdf8;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.key {
+    background: #334155;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    padding: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.key:active { background: #475569; }
+.action-key { background: #0284c7;}
+
+/* Toggle Switch */
+.action-toggle {
+    display: flex;
+    background: #0f172a;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 10 px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.toggle-btn.active {
+    background: #0284c7;
+    color: 'fff';
+}
+
+/* Scanner & Alerts */
+#qr-reader {
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #334155;
+}
+
+.status-card {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.status-card.info {background: #0284c7; color: #fff;}
+.status-card.success {background: #16a34a; color: #fff;}
+.status-card.error {background: #dc2626; color: #fff;}
+.error-msg {color: #f87171; font-size: 0.85rem;}
