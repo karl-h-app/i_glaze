@@ -17,6 +17,19 @@ body {
     padding: 16px;
 }
 
+.company-logo {
+    max-width: 180px;
+    max-height: 80px;
+    height: auto;
+    width: auto;
+    margin: 0 auto 16px auto;
+    display: block;
+    object-fit: contain;
+    background-color: #ffffff;
+    padding: 6px 12 px;
+    border-radius: 8px;
+}
+
 .app-container {
     width: 100%;
     max-width: 380px;
