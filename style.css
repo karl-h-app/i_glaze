@@ -171,3 +171,23 @@ body {
     font-weight: bold;
     cursor: pointer;
 }
+
+/* Confirm check-out prompt */
+.confirm-box {
+    display: flex;
+    gap: 12px;
+}
+
+.confirm-box button {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+}
+
+.confirm-yes { background: #16a34a; }
+.confirm-no { background: #475569; }
