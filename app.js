@@ -133,7 +133,8 @@ async function sendLog(siteId, lat, lng) {
             showStatus(`√ ${currentAction} logged for ${result.name}`, "success");
             setTimeout(() => { location.reload(); }, 3000);
         } else {
-            showStatus("Not logged: " + (result.reason || "unknown error"), "error");
+            showStatus(`${currentAction} failed: ${result.reason || "unknown error"}. This attempt has been recorded.`, "error");
+            setTimeout(() => { location.reload(); }, 6000);
         }
     } catch (err) {
         showStatus("Submission failed. Network issue.", "error");
