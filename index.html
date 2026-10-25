@@ -59,6 +59,11 @@
                 <p id="status-text">Processing...</p>
             </div>
 
+            <div id="confirm-box" class="confirm-box hidden">
+                <button class="confirm-yes" onclick="confirmCheckout()">Yes, check out</button>
+                <button class="confirm-no" onclick="declineCheckout()">No</button>
+            </div>
+
             <button id="retry-btn" class="retry-btn hidden" onclick="retryScan()">Try again</button>
             <button class="logout-btn" onclick="logout()">Log out</button>
         </div>
