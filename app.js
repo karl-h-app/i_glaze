@@ -9,6 +9,7 @@ let html5QrCode = null;
 let busy = false;
 let handlingScan = false;
 let idleTimer = null;
+let pendingScan = null;
 
 // --- Backend helper ---
 // text/plain avoids a CORS preflight, which Apps Script can't answer.
@@ -78,7 +79,10 @@ async function submitPin() {
         }
 
         errorEl.innerText = "";
-        document.getElementById("contractor-greeting").innerText = `Welcome, ${result.name}`;
+        document.getElementById("contractor-greeting").innerText = result.checkedIn
+            ? `Welcome, ${result.name}. You're currently checked in.`
+            : `Welcome, ${result.name}`;
+        setAction(result.checkedIn ? "Check-Out" : "Check-In");
         document.getElementById("pin-screen").classList.add("hidden");
         document.getElementById("scanner-screen").classList.remove("hidden");
         document.getElementById("app-subtitle").innerText = "Scan site QR code";
@@ -173,6 +177,12 @@ async function sendLog(siteId, lat, lng) {
             clearTimeout(idleTimer);
             showStatus(`√ ${currentAction} logged for ${result.name}`, "success");
             setTimeout(() => { location.reload(); }, 3000);
+        } else if (result.status === "ALREADY_CHECKED_IN") {
+            // Ask before doing anything; nothing has been logged yet
+            pendingScan = { siteId: siteId, lat: lat, lng: lng };
+            startIdleTimer();
+            showStatus("You're already checked in here. Did you mean to check out?", "info");
+            document.getElementById("confirm-box").classList.remove("hidden");
         } else if (result.reason === "Invalid or Inactive PIN") {
             // PIN was switched off mid-session: retrying can't help
             showStatus(`${currentAction} failed: ${result.reason}.`, "error");
@@ -194,6 +204,22 @@ function showStatus(message, type) {
     card.classList.remove("hidden", "info", "success", "error");
     card.classList.add(type);
     text.innerText = message;
+}
+
+// --- "Did you mean to check out?" ---
+function confirmCheckout() {
+    document.getElementById("confirm-box").classList.add("hidden");
+    if (!pendingScan) return;
+    setAction("Check-Out");
+    sendLog(pendingScan.siteId, pendingScan.lat, pendingScan.lng);
+}
+
+function declineCheckout() {
+    document.getElementById("confirm-box").classList.add("hidden");
+    pendingScan = null;
+    clearTimeout(idleTimer);
+    showStatus("OK, nothing has been logged.", "info");
+    setTimeout(() => { location.reload(); }, 3000);
 }
 
 // --- Footer year ---
