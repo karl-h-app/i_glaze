@@ -1,11 +1,25 @@
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMkTuDRTMRfSy6mrP2X_XSYMKSv4mG13dCdITgbe-fWQkLRr2VKHBXybH4aAwc8qX0/exec";
+// Paste the new Web App URL from your Apps Script deployment here
+const APPS_SCRIPT_URL = "PASTE_NEW_WEB_APP_URL_HERE";
 
 let enteredPin = "";
 let currentAction = "Check-In";
 let html5QrCode = null;
+let busy = false;
+
+// --- Backend helper ---
+// text/plain avoids a CORS preflight, which Apps Script can't answer.
+async function callBackend(payload) {
+    const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+    });
+    return res.json();
+}
 
 // --- PIN Pad Logic ---
 function pressKey(num) {
+    if (busy) return;
     if (enteredPin.length < 4) {
         enteredPin += num;
         updatePinDots();
@@ -13,28 +27,50 @@ function pressKey(num) {
 }
 
 function clearPin() {
+    if (busy) return;
     enteredPin = "";
     updatePinDots();
     document.getElementById("pin-error").innerText = "";
 }
 
 function updatePinDots() {
-    // Filled dots for entered digits, hollow for remaining
     const dots = "●".repeat(enteredPin.length) + "○".repeat(4 - enteredPin.length);
     document.getElementById("pin-dots").innerText = dots;
 }
 
-function submitPin() {
+async function submitPin() {
+    if (busy) return;
+    const errorEl = document.getElementById("pin-error");
+
     if (enteredPin.length !== 4) {
-        document.getElementById("pin-error").innerText = "Please enter a valid 4-digit PIN.";
+        errorEl.innerText = "Please enter a valid 4-digit PIN.";
         return;
     }
 
-    document.getElementById("pin-screen").classList.add("hidden");
-    document.getElementById("scanner-screen").classList.remove("hidden");
-    document.getElementById("app-subtitle").innerText = "Scan site QR code";
+    busy = true;
+    errorEl.innerText = "Checking PIN...";
 
-    startCameraScanner();
+    try {
+        const result = await callBackend({ type: "verify", pin: enteredPin });
+
+        if (result.status !== "SUCCESS") {
+            errorEl.innerText = "PIN not recognised. Try again.";
+            enteredPin = "";
+            updatePinDots();
+            return;
+        }
+
+        errorEl.innerText = "";
+        document.getElementById("contractor-greeting").innerText = `Welcome, ${result.name}`;
+        document.getElementById("pin-screen").classList.add("hidden");
+        document.getElementById("scanner-screen").classList.remove("hidden");
+        document.getElementById("app-subtitle").innerText = "Scan site QR code";
+        startCameraScanner();
+    } catch (err) {
+        errorEl.innerText = "Could not reach the server. Check your signal and try again.";
+    } finally {
+        busy = false;
+    }
 }
 
 // --- Action Toggle Logic ---
@@ -55,58 +91,53 @@ function startCameraScanner() {
             html5QrCode.stop().catch(() => {});
             processScanAttempt(scannedSiteId);
         },
-        () => {
-            // Frame scanning... ignore minor capture drops
-        }
+        () => {}
     ).catch(() => {
         showStatus("Camera permissions denied or unavailable.", "error");
     });
 }
 
-// --- Location Capture & Payload Delivery ---
+// --- Location Capture & Logging ---
 function processScanAttempt(siteId) {
     showStatus("Requesting GPS location...", "info");
 
     if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                sendPayloadToBackend(siteId, position.coords.latitude, position.coords.longitude);
+                sendLog(siteId, position.coords.latitude, position.coords.longitude);
             },
             () => {
-                sendPayloadToBackend(siteId, "Denied", "Denied");
+                sendLog(siteId, "Denied", "Denied");
             },
             { enableHighAccuracy: true, timeout: 8000 }
         );
     } else {
-        sendPayloadToBackend(siteId, "Not Supported", "Not Supported");
+        sendLog(siteId, "Not Supported", "Not Supported");
     }
 }
 
-function sendPayloadToBackend(siteId, lat, lng) {
-    showStatus("Logging attendance attempt...", "info");
+async function sendLog(siteId, lat, lng) {
+    showStatus("Logging attendance...", "info");
 
-    const payload = {
-        pin: enteredPin,
-        siteId: siteId,
-        action: currentAction,
-        latitude: lat,
-        longitude: lng
-    };
+    try {
+        const result = await callBackend({
+            type: "log",
+            pin: enteredPin,
+            siteId: siteId,
+            action: currentAction,
+            latitude: lat,
+            longitude: lng
+        });
 
-    fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        // text/plain keeps this a "simple" request; Apps Script reads it via e.postData.contents
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        showStatus(`√ ${currentAction} request sent!`, "success");
-        setTimeout(() => { location.reload(); }, 3000);
-    })
-    .catch(() => {
+        if (result.status === "SUCCESS") {
+            showStatus(`√ ${currentAction} logged for ${result.name}`, "success");
+            setTimeout(() => { location.reload(); }, 3000);
+        } else {
+            showStatus("Not logged: " + (result.reason || "unknown error"), "error");
+        }
+    } catch (err) {
         showStatus("Submission failed. Network issue.", "error");
-    });
+    }
 }
 
 function showStatus(message, type) {
