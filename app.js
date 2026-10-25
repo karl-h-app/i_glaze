@@ -1,5 +1,5 @@
 // Paste the new Web App URL from your Apps Script deployment here
-const APPS_SCRIPT_URL = "PASTE_NEW_WEB_APP_URL_HERE";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMkTuDRTMRfSy6mrP2X_XSYMKSv4mG13dCdITgbe-fWQkLRr2VKHBXybH4aAwc8qX0/exec";
 
 let enteredPin = "";
 let currentAction = "Check-In";
@@ -54,7 +54,9 @@ async function submitPin() {
         const result = await callBackend({ type: "verify", pin: enteredPin });
 
         if (result.status !== "SUCCESS") {
-            errorEl.innerText = "PIN not recognised. Try again.";
+            errorEl.innerText = (result.reason === "Invalid or Inactive PIN")
+                ? "PIN not recognised. Try again."
+                : (result.reason || "Something went wrong. Try again.");
             enteredPin = "";
             updatePinDots();
             return;
