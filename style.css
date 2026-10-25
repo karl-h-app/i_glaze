@@ -148,3 +148,26 @@ body {
 .app-footer .credit {
     margin-top: 4px;
 }
+
+/* Retry / Log out buttons */
+.retry-btn {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.logout-btn {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+}
