@@ -132,3 +132,19 @@ body {
 .status-card.success { background: #16a34a; color: #fff; }
 .status-card.error { background: #dc2626; color: #fff; }
 .error-msg { color: #f87171; font-size: 0.85rem; }
+
+/* Footer */
+.app-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #334155;
+}
+
+.app-footer p {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.app-footer .credit {
+    margin-top: 4px;
+}
