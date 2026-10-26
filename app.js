@@ -183,6 +183,12 @@ async function sendLog(siteId, lat, lng) {
             startIdleTimer();
             showStatus("You're already checked in here. Did you mean to check out?", "info");
             document.getElementById("confirm-box").classList.remove("hidden");
+        } else if (result.status === "NO_CHECK_IN") {
+            // Ask before doing anything; nothing has been logged yet
+            pendingScan = { siteId: siteId, lat: lat, lng: lng };
+            startIdleTimer();
+            showStatus("You're not checked in at this site. Did you mean to check in?", "info");
+            document.getElementById("nocheckin-box").classList.remove("hidden");
         } else if (result.reason === "Invalid or Inactive PIN") {
             // PIN was switched off mid-session: retrying can't help
             showStatus(`${currentAction} failed: ${result.reason}.`, "error");
@@ -221,6 +227,87 @@ function declineCheckout() {
     showStatus("OK, nothing has been logged.", "info");
     setTimeout(() => { location.reload(); }, 3000);
 }
+
+// --- "Did you mean to check in?" ---
+function confirmCheckIn() {
+    document.getElementById("nocheckin-box").classList.add("hidden");
+    if (!pendingScan) return;
+    setAction("Check-In");
+    sendLog(pendingScan.siteId, pendingScan.lat, pendingScan.lng);
+}
+
+function declineCheckIn() {
+    document.getElementById("nocheckin-box").classList.add("hidden");
+    pendingScan = null;
+    clearTimeout(idleTimer);
+    showStatus("OK, nothing has been logged.", "info");
+    setTimeout(() => { location.reload(); }, 3000);
+}
+
+// --- "I forgot to check in": comment + optional manual arrival time ---
+function showManualForm() {
+    document.getElementById("nocheckin-box").classList.add("hidden");
+    document.getElementById("status-card").classList.add("hidden");
+    document.getElementById("manual-error").innerText = "";
+    document.getElementById("manual-form").classList.remove("hidden");
+    startIdleTimer();
+}
+
+function cancelManual() {
+    document.getElementById("manual-form").classList.add("hidden");
+    pendingScan = null;
+    clearTimeout(idleTimer);
+    showStatus("OK, nothing has been logged.", "info");
+    setTimeout(() => { location.reload(); }, 3000);
+}
+
+async function submitManualCheckout() {
+    if (busy || !pendingScan) return;
+
+    const errorEl = document.getElementById("manual-error");
+    const comment = document.getElementById("manual-comment").value.trim();
+
+    if (!comment) {
+        errorEl.innerText = "Please add your check-in time and the reason.";
+        return;
+    }
+
+    busy = true;
+    errorEl.innerText = "Submitting...";
+
+    try {
+        const result = await callBackend({
+            type: "log",
+            pin: enteredPin,
+            siteId: pendingScan.siteId,
+            action: "Check-Out",
+            latitude: pendingScan.lat,
+            longitude: pendingScan.lng,
+            manual: true,
+            comment: comment
+        });
+
+        if (result.status === "SUCCESS") {
+            clearTimeout(idleTimer);
+            document.getElementById("manual-form").classList.add("hidden");
+            showStatus(`√ Check-Out logged for ${result.name} (no check-in recorded)`, "success");
+            setTimeout(() => { location.reload(); }, 3000);
+        } else if (result.reason === "Invalid or Inactive PIN") {
+            document.getElementById("manual-form").classList.add("hidden");
+            showStatus(`Check-Out failed: ${result.reason}.`, "error");
+            setTimeout(() => { location.reload(); }, 4000);
+        } else {
+            errorEl.innerText = result.reason || "Something went wrong. Please try again.";
+        }
+    } catch (err) {
+        errorEl.innerText = "Network issue. Please try again.";
+    } finally {
+        busy = false;
+    }
+}
+
+// Typing a comment counts as activity, so the idle log-out doesn't interrupt it
+document.getElementById("manual-comment").addEventListener("input", startIdleTimer);
 
 // --- Footer year ---
 document.getElementById("footer-year").innerText = new Date().getFullYear();
