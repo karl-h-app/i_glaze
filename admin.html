@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Site Attendance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -62,6 +63,17 @@
         <div class="btns"><button id="ds">Save</button><button class="ghost" onclick="dlg.close()">Cancel</button></div>
     </dialog>
 
+    <dialog id="pickdlg" class="mapdlg">
+        <h2>Pick site location</h2>
+        <div class="pick-bar">
+            <input type="text" id="p-q" placeholder="Search an address, postcode or place">
+            <button onclick="pickSearch()">Search</button>
+        </div>
+        <div id="pickmap"></div>
+        <p id="p-info" class="note">Click the map or drag the pin to set the location. The circle shows the 500m check-in area.</p>
+        <div class="btns"><button id="p-use">Use this location</button><button class="ghost" onclick="pickdlg.close()">Cancel</button></div>
+    </dialog>
+
     <dialog id="mapdlg" class="mapdlg">
         <h2 id="mt"></h2>
         <iframe id="mf" title="Location map" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
@@ -74,6 +86,7 @@
 
     <footer>&copy; <span id="yr"></span> i-Glaze Limited. All rights reserved. Built by Karl Harris</footer>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>
