@@ -35,3 +35,7 @@ dialog h2 { margin-bottom: 14px; }
 .err { color: #f87171; font-size: 0.85rem; min-height: 1.2em; }
 .btns { display: flex; gap: 10px; margin-top: 8px; }
 footer { text-align: center; color: #64748b; font-size: 0.75rem; margin-top: 20px; }
+
+/* QR generator */
+#q-canvas { display: block; width: 100%; max-width: 380px; height: auto; background: #fff; border-radius: 10px; }
+.note { margin-top: 12px; font-size: 0.85rem; color: #94a3b8; }
