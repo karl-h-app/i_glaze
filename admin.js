@@ -125,11 +125,11 @@ function renderHours() {
         const cls = v[5] === "FAILED" ? "failed" : v[5] === "MANUAL" ? "manual" : "";
         const note = [v[6], v[12]].filter(Boolean).join(" | ");
         return `<tr class="${cls}"><td>${day}</td><td>${esc(v[1])}</td><td>${esc(v[4] || v[3])}</td>` +
-               `<td>${esc(v[0])}</td><td>${esc(v[9])}</td><td>${hm(m)}</td><td>${esc(v[5])}</td><td>${esc(note)}</td>` +
+               `<td>${esc(v[0])}</td><td>${esc(v[9])}</td><td>${hm(m)}</td><td>${esc(v[5])}</td><td>${esc(note)}</td><td>${esc(v[13])}</td>` +
                `<td class="act"><button class="small" onclick="editLog(${r.row})">Edit</button>` +
                `<button class="small danger" onclick="delLog(${r.row})">Delete</button></td></tr>`;
     }).join("");
-    $("t-hours").innerHTML = `<tr><th>Date</th><th>Employee</th><th>Site</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th><th>Notes</th><th></th></tr>${body}`;
+    $("t-hours").innerHTML = `<tr><th>Date</th><th>Employee</th><th>Site</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th><th>Notes</th><th>Admin comment</th><th></th></tr>${body}`;
     $("summary").innerHTML = Object.keys(totals).sort().map((n) => `<span class="chip">${esc(n)}: <b>${hm(totals[n])}</b></span>`).join("");
 }
 
@@ -137,17 +137,19 @@ function editLog(row) {
     const r = state.logs.find((x) => x.row === row), v = r.v;
     $("dt").innerText = "Edit hours: " + v[1];
     $("de").innerText = "";
+    const prefill = v[13].replace(/^\[Edited by .*?\]( - )?/, "");
     $("df").innerHTML =
         `<label class="field">Check-in<input type="datetime-local" id="e-in" value="${toLocal(v[0])}"></label>` +
         `<label class="field">Check-out<input type="datetime-local" id="e-out" value="${toLocal(v[9])}"></label>` +
-        `<label class="field">Comment<textarea id="e-c" rows="3" maxlength="300">${esc(v[12].replace(/ \[Edited by .*\]$/, ""))}</textarea></label>`;
+        `<p class="field">User comment: ${esc(v[12]) || "none"}</p>` +
+        `<label class="field">Admin comment<textarea id="e-c" rows="3" maxlength="300" placeholder="e.g. approved by Liam">${esc(prefill)}</textarea></label>`;
     $("ds").onclick = async () => {
         $("de").innerText = "Saving...";
         const res = await api("editLog", {
             row, key: v[1],
             checkIn: $("e-in").value.replace("T", " "),
             checkOut: $("e-out").value.replace("T", " "),
-            comment: $("e-c").value
+            adminComment: $("e-c").value
         });
         if (res.status !== "SUCCESS") { $("de").innerText = res.reason; return; }
         dlg.close(); loadHours();
@@ -165,11 +167,11 @@ async function delLog(row) {
 
 function exportCsv() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-    const lines = [["Date", "Employee", "Site", "In", "Out", "Hours", "Status", "Notes"].join(",")];
+    const lines = [["Date", "Employee", "Site", "In", "Out", "Hours", "Status", "Notes", "Admin Comment"].join(",")];
     visibleLogs().forEach((r) => {
         const v = r.v, m = mins(v[0], v[9]);
         const day = (v[0].match(/^\d{4}-\d\d-\d\d/) || v[9].match(/^\d{4}-\d\d-\d\d/) || [""])[0];
-        lines.push([day, v[1], v[4] || v[3], v[0], v[9], m === null ? "" : (m / 60).toFixed(2), v[5], [v[6], v[12]].filter(Boolean).join(" | ")].map(q).join(","));
+        lines.push([day, v[1], v[4] || v[3], v[0], v[9], m === null ? "" : (m / 60).toFixed(2), v[5], [v[6], v[12]].filter(Boolean).join(" | "), v[13]].map(q).join(","));
     });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
