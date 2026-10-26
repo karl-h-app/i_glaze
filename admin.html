@@ -62,6 +62,16 @@
         <div class="btns"><button id="ds">Save</button><button class="ghost" onclick="dlg.close()">Cancel</button></div>
     </dialog>
 
+    <dialog id="mapdlg" class="mapdlg">
+        <h2 id="mt"></h2>
+        <iframe id="mf" title="Location map" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        <p id="mm" class="note"></p>
+        <div class="btns">
+            <a id="ml" class="btn-link" target="_blank" rel="noopener">Open in Google Maps</a>
+            <button class="ghost" onclick="mapdlg.close()">Close</button>
+        </div>
+    </dialog>
+
     <footer>&copy; <span id="yr"></span> i-Glaze Limited. All rights reserved. Built by Karl Harris</footer>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
     <script src="admin.js"></script>
