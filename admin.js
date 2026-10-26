@@ -40,7 +40,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 // ---------- Tabs ----------
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("active", x === b));
-    ["hours", "Users", "Sites"].forEach((t) => { $(t).hidden = t !== b.dataset.tab; });
+    ["hours", "Users", "Sites", "qr"].forEach((t) => { $(t).hidden = t !== b.dataset.tab; });
 }));
 
 // ---------- Users & Sites ----------
@@ -48,7 +48,7 @@ async function loadLists() {
     const r = await api("list");
     if (r.status !== "SUCCESS") return alert(r.reason);
     state.Users = r.Users; state.Sites = r.Sites;
-    renderTable("Users"); renderTable("Sites");
+    renderTable("Users"); renderTable("Sites"); fillQrSites();
 }
 
 function renderTable(tab) {
@@ -184,6 +184,94 @@ function exportCsv() {
 
 $("f-emp").addEventListener("input", renderHours);
 $("f-failed").addEventListener("change", renderHours);
+
+// ---------- QR codes ----------
+const logoImg = new Image();
+logoImg.onload = drawQr;
+logoImg.src = "company%20logo1.png";   // same file as the page logo
+
+function fillQrSites() {
+    const sel = $("q-site"), keep = sel.value;
+    sel.innerHTML = state.Sites.map((r) =>
+        `<option value="${esc(r.v[0])}">${esc(r.v[1] || r.v[0])} (${esc(r.v[0])})${r.v[5] === "Inactive" ? " - inactive" : ""}</option>`).join("");
+    if (keep) sel.value = keep;
+    drawQr();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+function drawEye(ctx, x, y, cell) {
+    const s = cell * 7;
+    ctx.fillStyle = "#000"; roundRect(ctx, x, y, s, s, cell * 2.2); ctx.fill();
+    ctx.fillStyle = "#fff"; roundRect(ctx, x + cell, y + cell, s - 2 * cell, s - 2 * cell, cell * 1.4); ctx.fill();
+    ctx.fillStyle = "#000"; roundRect(ctx, x + 2 * cell, y + 2 * cell, s - 4 * cell, s - 4 * cell, cell * 0.9); ctx.fill();
+}
+
+function qrText() { return $("q-text").value.trim() || $("q-site").value; }
+
+function drawQr() {
+    const c = $("q-canvas"), ctx = c.getContext("2d"), text = qrText();
+    if (typeof qrcode === "undefined" || !text) return;
+
+    const custom = $("q-text").value.trim() !== "";
+    const site = state.Sites.find((r) => r.v[0] === text);
+    const label = $("q-label").checked && !custom && site;
+    const size = 800, pad = 40;
+
+    const qr = qrcode(0, "H");          // "H" = highest error correction, so the logo can cover the middle
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount(), cell = (size - pad * 2) / n;
+
+    c.width = size;
+    c.height = size + (label ? 90 : 0);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.fillStyle = "#000";
+    const inEye = (r, k) => (r < 7 && k < 7) || (r < 7 && k >= n - 7) || (r >= n - 7 && k < 7);
+    for (let r = 0; r < n; r++) {
+        for (let k = 0; k < n; k++) {
+            if (!inEye(r, k) && qr.isDark(r, k)) ctx.fillRect(pad + k * cell, pad + r * cell, cell + 0.5, cell + 0.5);
+        }
+    }
+    drawEye(ctx, pad, pad, cell);
+    drawEye(ctx, pad + (n - 7) * cell, pad, cell);
+    drawEye(ctx, pad, pad + (n - 7) * cell, cell);
+
+    if (logoImg.complete && logoImg.naturalWidth) {
+        const w = size * 0.34, h = w * logoImg.naturalHeight / logoImg.naturalWidth;
+        const x = (size - w) / 2, y = (size - h) / 2;
+        ctx.fillStyle = "#fff"; roundRect(ctx, x - 14, y - 14, w + 28, h + 28, 12); ctx.fill();
+        ctx.drawImage(logoImg, x, y, w, h);
+    }
+
+    if (label) {
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 40px -apple-system, Segoe UI, Roboto, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(site.v[1] || site.v[0], size / 2, size + 55);
+    }
+}
+
+function downloadQr() {
+    const text = qrText();
+    if (!text) return;
+    const a = document.createElement("a");
+    a.href = $("q-canvas").toDataURL("image/png");
+    a.download = "QR-" + text.replace(/[^\w-]+/g, "_") + ".png";
+    a.click();
+}
+
+["q-site", "q-text", "q-label"].forEach((id) => $(id).addEventListener("input", drawQr));
 
 // ---------- Start ----------
 $("who").innerText = "Logged in as " + (sessionStorage.getItem("adminName") || "Admin");
