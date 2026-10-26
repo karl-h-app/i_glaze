@@ -62,3 +62,5 @@ td a { color: #38bdf8; }
 .pick-bar { display: flex; gap: 10px; margin-bottom: 10px; }
 .pick-bar input { flex: 1; }
 #pickmap { height: 380px; border-radius: 10px; background: #0f172a; }
+
+.mismatch { color: #fbbf24 !important; }
