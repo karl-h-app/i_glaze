@@ -104,6 +104,10 @@ const dmy = (s) => String(s).replace(/^(\d{4})-(\d\d)-(\d\d)/, "$3/$2/$1");
 const dmyAll = (s) => String(s).replace(/(\d{4})-(\d\d)-(\d\d)/g, "$3/$2/$1");
 // Rows an admin has edited show as ADMIN UPDATED (also covers rows edited before this change)
 const statusOf = (v) => (v[13] && (v[5] === "MANUAL" || v[5] === "SUCCESS")) ? "ADMIN UPDATED" : v[5];
+// Distance + Google Maps link, from the check-in (H, I) and check-out (K, L) columns
+const isMap = (u) => /^https:\/\/www\.google\.com\/maps/.test(u);
+const locBit = (d, u) => (!d || d === "N/A") ? "-" : isMap(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(d)} &#128205;</a>` : esc(d);
+const locCell = (v) => `In ${locBit(v[7], v[8])}<br>Out ${locBit(v[10], v[11])}`;
 const toLocal = (s) => /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(s) ? s.replace(" ", "T") : "";
 const mins = (a, b) => (toLocal(a) && toLocal(b)) ? Math.round((new Date(toLocal(b)) - new Date(toLocal(a))) / 60000) : null;
 const hm = (m) => m === null ? "" : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
@@ -130,11 +134,11 @@ function renderHours() {
         const st = statusOf(v), cls = st === "FAILED" ? "failed" : st === "MANUAL" ? "manual" : "";
         const note = [v[6], v[12]].filter(Boolean).join(" | ");
         return `<tr class="${cls}"><td>${dmy(day)}</td><td>${esc(v[1])}</td><td>${esc(v[4] || v[3])}</td>` +
-               `<td>${esc(dmy(v[0]))}</td><td>${esc(dmy(v[9]))}</td><td>${hm(m)}</td><td>${esc(st)}</td><td>${esc(note)}</td><td>${esc(dmyAll(v[13]))}</td>` +
+               `<td>${esc(dmy(v[0]))}</td><td>${esc(dmy(v[9]))}</td><td>${hm(m)}</td><td>${locCell(v)}</td><td>${esc(st)}</td><td>${esc(note)}</td><td>${esc(dmyAll(v[13]))}</td>` +
                `<td class="act"><button class="small" onclick="editLog(${r.row})">Edit</button>` +
                `<button class="small danger" onclick="delLog(${r.row})">Delete</button></td></tr>`;
     }).join("");
-    $("t-hours").innerHTML = `<tr><th>Date</th><th>Employee</th><th>Site</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th><th>Notes</th><th>Admin comment</th><th></th></tr>${body}`;
+    $("t-hours").innerHTML = `<tr><th>Date</th><th>Employee</th><th>Site</th><th>In</th><th>Out</th><th>Hours</th><th>Location</th><th>Status</th><th>Notes</th><th>Admin comment</th><th></th></tr>${body}`;
     $("summary").innerHTML = Object.keys(totals).sort().map((n) => `<span class="chip">${esc(n)}: <b>${hm(totals[n])}</b></span>`).join("");
 }
 
@@ -172,11 +176,11 @@ async function delLog(row) {
 
 function exportCsv() {
     const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-    const lines = [["Date", "Employee", "Site", "In", "Out", "Hours", "Status", "Notes", "Admin Comment"].join(",")];
+    const lines = [["Date", "Employee", "Site", "In", "Out", "Hours", "In Distance", "In Map", "Out Distance", "Out Map", "Status", "Notes", "Admin Comment"].join(",")];
     visibleLogs().forEach((r) => {
         const v = r.v, m = mins(v[0], v[9]);
         const day = (v[0].match(/^\d{4}-\d\d-\d\d/) || v[9].match(/^\d{4}-\d\d-\d\d/) || [""])[0];
-        lines.push([dmy(day), v[1], v[4] || v[3], dmy(v[0]), dmy(v[9]), m === null ? "" : (m / 60).toFixed(2), statusOf(v), [v[6], v[12]].filter(Boolean).join(" | "), dmyAll(v[13])].map(q).join(","));
+        lines.push([dmy(day), v[1], v[4] || v[3], dmy(v[0]), dmy(v[9]), m === null ? "" : (m / 60).toFixed(2), v[7], v[8], v[10], v[11], statusOf(v), [v[6], v[12]].filter(Boolean).join(" | "), dmyAll(v[13])].map(q).join(","));
     });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
