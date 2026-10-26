@@ -102,6 +102,8 @@ async function del(tab, row) {
 // Display dates as dd/mm/yyyy (data stays yyyy-mm-dd underneath)
 const dmy = (s) => String(s).replace(/^(\d{4})-(\d\d)-(\d\d)/, "$3/$2/$1");
 const dmyAll = (s) => String(s).replace(/(\d{4})-(\d\d)-(\d\d)/g, "$3/$2/$1");
+// Rows an admin has edited show as ADMIN UPDATED (also covers rows edited before this change)
+const statusOf = (v) => (v[13] && (v[5] === "MANUAL" || v[5] === "SUCCESS")) ? "ADMIN UPDATED" : v[5];
 const toLocal = (s) => /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(s) ? s.replace(" ", "T") : "";
 const mins = (a, b) => (toLocal(a) && toLocal(b)) ? Math.round((new Date(toLocal(b)) - new Date(toLocal(a))) / 60000) : null;
 const hm = (m) => m === null ? "" : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
@@ -125,10 +127,10 @@ function renderHours() {
         const v = r.v, m = mins(v[0], v[9]);
         if (m !== null && v[5] !== "FAILED") totals[v[1]] = (totals[v[1]] || 0) + m;
         const day = (v[0].match(/^\d{4}-\d\d-\d\d/) || v[9].match(/^\d{4}-\d\d-\d\d/) || [""])[0];
-        const cls = v[5] === "FAILED" ? "failed" : v[5] === "MANUAL" ? "manual" : "";
+        const st = statusOf(v), cls = st === "FAILED" ? "failed" : st === "MANUAL" ? "manual" : "";
         const note = [v[6], v[12]].filter(Boolean).join(" | ");
         return `<tr class="${cls}"><td>${dmy(day)}</td><td>${esc(v[1])}</td><td>${esc(v[4] || v[3])}</td>` +
-               `<td>${esc(dmy(v[0]))}</td><td>${esc(dmy(v[9]))}</td><td>${hm(m)}</td><td>${esc(v[5])}</td><td>${esc(note)}</td><td>${esc(dmyAll(v[13]))}</td>` +
+               `<td>${esc(dmy(v[0]))}</td><td>${esc(dmy(v[9]))}</td><td>${hm(m)}</td><td>${esc(st)}</td><td>${esc(note)}</td><td>${esc(dmyAll(v[13]))}</td>` +
                `<td class="act"><button class="small" onclick="editLog(${r.row})">Edit</button>` +
                `<button class="small danger" onclick="delLog(${r.row})">Delete</button></td></tr>`;
     }).join("");
@@ -174,7 +176,7 @@ function exportCsv() {
     visibleLogs().forEach((r) => {
         const v = r.v, m = mins(v[0], v[9]);
         const day = (v[0].match(/^\d{4}-\d\d-\d\d/) || v[9].match(/^\d{4}-\d\d-\d\d/) || [""])[0];
-        lines.push([dmy(day), v[1], v[4] || v[3], dmy(v[0]), dmy(v[9]), m === null ? "" : (m / 60).toFixed(2), v[5], [v[6], v[12]].filter(Boolean).join(" | "), dmyAll(v[13])].map(q).join(","));
+        lines.push([dmy(day), v[1], v[4] || v[3], dmy(v[0]), dmy(v[9]), m === null ? "" : (m / 60).toFixed(2), statusOf(v), [v[6], v[12]].filter(Boolean).join(" | "), dmyAll(v[13])].map(q).join(","));
     });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
