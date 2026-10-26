@@ -106,8 +106,8 @@ const dmyAll = (s) => String(s).replace(/(\d{4})-(\d\d)-(\d\d)/g, "$3/$2/$1");
 const statusOf = (v) => (v[13] && (v[5] === "MANUAL" || v[5] === "SUCCESS")) ? "ADMIN UPDATED" : v[5];
 // Distance + Google Maps link, from the check-in (H, I) and check-out (K, L) columns
 const isMap = (u) => /^https:\/\/www\.google\.com\/maps/.test(u);
-const locBit = (d, u) => (!d || d === "N/A") ? "-" : isMap(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(d)} &#128205;</a>` : esc(d);
-const locCell = (v) => `In ${locBit(v[7], v[8])}<br>Out ${locBit(v[10], v[11])}`;
+const locBit = (d, u, row, w) => (!d || d === "N/A") ? "-" : isMap(u) ? `<a href="#" onclick="showMap(${row}, '${w}'); return false;">${esc(d)} &#128205;</a>` : esc(d);
+const locCell = (v, row) => `In ${locBit(v[7], v[8], row, "in")}<br>Out ${locBit(v[10], v[11], row, "out")}`;
 const toLocal = (s) => /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(s) ? s.replace(" ", "T") : "";
 const mins = (a, b) => (toLocal(a) && toLocal(b)) ? Math.round((new Date(toLocal(b)) - new Date(toLocal(a))) / 60000) : null;
 const hm = (m) => m === null ? "" : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
@@ -134,7 +134,7 @@ function renderHours() {
         const st = statusOf(v), cls = st === "FAILED" ? "failed" : st === "MANUAL" ? "manual" : "";
         const note = [v[6], v[12]].filter(Boolean).join(" | ");
         return `<tr class="${cls}"><td>${dmy(day)}</td><td>${esc(v[1])}</td><td>${esc(v[4] || v[3])}</td>` +
-               `<td>${esc(dmy(v[0]))}</td><td>${esc(dmy(v[9]))}</td><td>${hm(m)}</td><td>${locCell(v)}</td><td>${esc(st)}</td><td>${esc(note)}</td><td>${esc(dmyAll(v[13]))}</td>` +
+               `<td>${esc(dmy(v[0]))}</td><td>${esc(dmy(v[9]))}</td><td>${hm(m)}</td><td>${locCell(v, r.row)}</td><td>${esc(st)}</td><td>${esc(note)}</td><td>${esc(dmyAll(v[13]))}</td>` +
                `<td class="act"><button class="small" onclick="editLog(${r.row})">Edit</button>` +
                `<button class="small danger" onclick="delLog(${r.row})">Delete</button></td></tr>`;
     }).join("");
@@ -190,6 +190,24 @@ function exportCsv() {
 
 $("f-emp").addEventListener("input", renderHours);
 $("f-failed").addEventListener("change", renderHours);
+
+// ---------- Map pop-up ----------
+const mapdlg = $("mapdlg");
+mapdlg.addEventListener("close", () => { $("mf").src = "about:blank"; });
+
+function showMap(row, which) {
+    const r = state.logs.find((x) => x.row === row);
+    if (!r) return;
+    const v = r.v, isIn = which === "in";
+    const url = isIn ? v[8] : v[11], dist = isIn ? v[7] : v[10], when = isIn ? v[0] : v[9];
+    const m = String(url).match(/maps\?q=(-?[\d.]+),(-?[\d.]+)/);
+    if (!m) return;
+    $("mt").innerText = `${v[1]}: ${isIn ? "check-in" : "check-out"} location`;
+    $("mm").innerText = `${dmy(when)} | ${dist} from ${v[4] || v[3]}`;
+    $("mf").src = `https://www.google.com/maps?q=${m[1]},${m[2]}&z=17&output=embed`;
+    $("ml").href = url;
+    mapdlg.showModal();
+}
 
 // ---------- QR codes ----------
 const logoImg = new Image();
