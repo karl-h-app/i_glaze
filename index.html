@@ -64,6 +64,24 @@
                 <button class="confirm-no" onclick="declineCheckout()">No</button>
             </div>
 
+            <div id="nocheckin-box" class="confirm-box hidden">
+                <button class="confirm-yes" onclick="confirmCheckIn()">Yes, check in</button>
+                <button class="confirm-no" onclick="declineCheckIn()">No</button>
+                <button class="forgot-btn" onclick="showManualForm()">I forgot to check in: check out anyway</button>
+            </div>
+
+            <div id="manual-form" class="manual-form hidden">
+                <p class="manual-title">Forgot to check in?</p>
+                <label for="manual-comment">Please provide your check-in time and the reason you didn't check in (required)</label>
+                <textarea id="manual-comment" rows="4" maxlength="300" placeholder="e.g. Arrived at 7:30, forgot to scan the QR code"></textarea>
+                <p class="manual-note">This will be recorded as a manual entry, not a scanned check-in.</p>
+                <p id="manual-error" class="error-msg"></p>
+                <div class="confirm-box">
+                    <button class="confirm-yes" onclick="submitManualCheckout()">Submit check-out</button>
+                    <button class="confirm-no" onclick="cancelManual()">Cancel</button>
+                </div>
+            </div>
+
             <button id="retry-btn" class="retry-btn hidden" onclick="retryScan()">Try again</button>
             <button class="logout-btn" onclick="logout()">Log out</button>
         </div>
