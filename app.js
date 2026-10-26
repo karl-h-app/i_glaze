@@ -36,7 +36,7 @@ function logout() {
 // --- PIN Pad Logic ---
 function pressKey(num) {
     if (busy) return;
-    if (enteredPin.length < 4) {
+    if (enteredPin.length < 8) {
         enteredPin += num;
         updatePinDots();
     }
@@ -50,7 +50,7 @@ function clearPin() {
 }
 
 function updatePinDots() {
-    const dots = "●".repeat(enteredPin.length) + "○".repeat(4 - enteredPin.length);
+    const dots = "●".repeat(enteredPin.length) + "○".repeat(Math.max(0, 4 - enteredPin.length));
     document.getElementById("pin-dots").innerText = dots;
 }
 
@@ -58,8 +58,8 @@ async function submitPin() {
     if (busy) return;
     const errorEl = document.getElementById("pin-error");
 
-    if (enteredPin.length !== 4) {
-        errorEl.innerText = "Please enter a valid 4-digit PIN.";
+    if (enteredPin.length < 4) {
+        errorEl.innerText = "Please enter your PIN.";
         return;
     }
 
@@ -75,6 +75,13 @@ async function submitPin() {
                 : (result.reason || "Something went wrong. Try again.");
             enteredPin = "";
             updatePinDots();
+            return;
+        }
+
+        if (result.role === "Admin") {
+            sessionStorage.setItem("adminToken", result.token);
+            sessionStorage.setItem("adminName", result.name);
+            location.href = "admin.html";
             return;
         }
 
@@ -308,6 +315,14 @@ async function submitManualCheckout() {
 
 // Typing a comment counts as activity, so the idle log-out doesn't interrupt it
 document.getElementById("manual-comment").addEventListener("input", startIdleTimer);
+
+// --- Keyboard entry on the PIN screen (handy on desktop) ---
+document.addEventListener("keydown", (e) => {
+    if (document.getElementById("pin-screen").classList.contains("hidden")) return;
+    if (/^\d$/.test(e.key)) pressKey(e.key);
+    else if (e.key === "Backspace" && !busy) { enteredPin = enteredPin.slice(0, -1); updatePinDots(); }
+    else if (e.key === "Enter") submitPin();
+});
 
 // --- Footer year ---
 document.getElementById("footer-year").innerText = new Date().getFullYear();
