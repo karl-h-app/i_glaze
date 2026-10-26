@@ -74,6 +74,9 @@ function openEdit(tab, row) {
             : `<input data-i="${i}" value="${esc(val)}">`;
         return `<label class="field">${esc(f.l)}${input}</label>`;
     }).join("");
+    if (tab === "Sites") {
+        $("df").insertAdjacentHTML("beforeend", '<button class="ghost" type="button" onclick="openPicker()">&#128205; Pick location on map</button>');
+    }
     $("ds").onclick = () => saveRow(tab, row, cur);
     dlg.showModal();
 }
@@ -190,6 +193,78 @@ function exportCsv() {
 
 $("f-emp").addEventListener("input", renderHours);
 $("f-failed").addEventListener("change", renderHours);
+
+// ---------- Location picker (Leaflet + OpenStreetMap, free, no API key) ----------
+const pickdlg = $("pickdlg");
+let pickMap = null, pickMarker = null, pickCircle = null, picked = null;
+const RADIUS_M = 500;   // keep in step with MAX_RADIUS_METRES in Code.gs
+
+function setPick(lat, lng) {
+    picked = { lat: lat, lng: lng };
+    if (!pickMarker) {
+        pickMarker = L.marker([lat, lng], { draggable: true }).addTo(pickMap);
+        pickCircle = L.circle([lat, lng], { radius: RADIUS_M, color: "#0284c7", weight: 2, fillOpacity: 0.12 }).addTo(pickMap);
+        pickMarker.on("drag", () => pickCircle.setLatLng(pickMarker.getLatLng()));
+        pickMarker.on("dragend", () => { const p = pickMarker.getLatLng(); setPick(p.lat, p.lng); });
+    } else {
+        pickMarker.setLatLng([lat, lng]);
+        pickCircle.setLatLng([lat, lng]);
+    }
+    $("p-info").innerText = `Selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+}
+
+function openPicker() {
+    if (typeof L === "undefined") return alert("The map couldn't load. Check your internet connection and refresh.");
+    const latEl = $("df").querySelector('[data-i="2"]'), lngEl = $("df").querySelector('[data-i="3"]');
+    const has = latEl.value.trim() !== "" && lngEl.value.trim() !== "" && isFinite(Number(latEl.value)) && isFinite(Number(lngEl.value));
+    $("p-q").value = "";
+    pickdlg.showModal();
+
+    setTimeout(() => {   // wait for the dialog to be visible so the map gets its size
+        if (!pickMap) {
+            pickMap = L.map("pickmap");
+            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19, attribution: "&copy; OpenStreetMap contributors"
+            }).addTo(pickMap);
+            pickMap.on("click", (e) => setPick(e.latlng.lat, e.latlng.lng));
+        }
+        pickMap.invalidateSize();
+        if (pickMarker) { pickMap.removeLayer(pickMarker); pickMap.removeLayer(pickCircle); pickMarker = pickCircle = null; }
+        picked = null;
+        if (has) {
+            pickMap.setView([Number(latEl.value), Number(lngEl.value)], 17);
+            setPick(Number(latEl.value), Number(lngEl.value));
+        } else {
+            pickMap.setView([52.5, -1.5], 6);
+            $("p-info").innerText = "Search above, or click the map to place the pin. The circle shows the 500m check-in area.";
+        }
+    }, 60);
+
+    $("p-use").onclick = () => {
+        if (!picked) { $("p-info").innerText = "Click the map to choose a spot first."; return; }
+        latEl.value = picked.lat.toFixed(6);
+        lngEl.value = picked.lng.toFixed(6);
+        pickdlg.close();
+    };
+}
+
+async function pickSearch() {
+    const q = $("p-q").value.trim();
+    if (!q) return;
+    $("p-info").innerText = "Searching...";
+    try {
+        const res = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q));
+        const hits = await res.json();
+        if (!hits.length) { $("p-info").innerText = "Nothing found. Try a postcode or a fuller address."; return; }
+        const lat = Number(hits[0].lat), lng = Number(hits[0].lon);
+        pickMap.setView([lat, lng], 17);
+        setPick(lat, lng);
+    } catch (err) {
+        $("p-info").innerText = "Search failed. Check your connection, or click the map instead.";
+    }
+}
+
+$("p-q").addEventListener("keydown", (e) => { if (e.key === "Enter") pickSearch(); });
 
 // ---------- Map pop-up ----------
 const mapdlg = $("mapdlg");
