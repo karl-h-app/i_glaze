@@ -1,6 +1,18 @@
 // Must match the URL in app.js
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMkTuDRTMRfSy6mrP2X_XSYMKSv4mG13dCdITgbe-fWQkLRr2VKHBXybH4aAwc8qX0/exec";
 
+// --- Version (change APP_VERSION on every release, and the ?v= numbers in the HTML) ---
+const APP_VERSION = "1.0.0";
+let lastScriptV = "";
+
+function showVersion(scriptV) {
+    const el = document.getElementById("version-line");
+    if (!el) return;
+    if (scriptV) lastScriptV = scriptV;
+    el.textContent = "Page v" + APP_VERSION + (lastScriptV ? " | Script v" + lastScriptV : "");
+    el.classList.toggle("mismatch", !!lastScriptV && lastScriptV !== APP_VERSION);
+}
+
 const token = sessionStorage.getItem("adminToken");
 if (!token) location.href = "index.html";
 
@@ -29,6 +41,7 @@ async function api(op, extra) {
         body: JSON.stringify(Object.assign({ type: "admin", token, op }, extra))
     });
     const r = await res.json();
+    showVersion(r.version);
     if (r.expired) { alert(r.reason); logout(); }
     return r;
 }
@@ -374,6 +387,7 @@ function downloadQr() {
 // ---------- Start ----------
 $("who").innerText = "Logged in as " + (sessionStorage.getItem("adminName") || "Admin");
 $("yr").innerText = new Date().getFullYear();
+showVersion();
 const today = new Date(), weekAgo = new Date(Date.now() - 6 * 864e5);
 const iso = (d) => d.toLocaleDateString("en-CA");
 $("f-from").value = iso(weekAgo);
