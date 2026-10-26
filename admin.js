@@ -217,15 +217,14 @@ function drawEye(ctx, x, y, cell) {
     ctx.fillStyle = "#000"; roundRect(ctx, x + 2 * cell, y + 2 * cell, s - 4 * cell, s - 4 * cell, cell * 0.9); ctx.fill();
 }
 
-function qrText() { return $("q-text").value.trim() || $("q-site").value; }
+function qrText() { return $("q-site").value; }
 
 function drawQr() {
     const c = $("q-canvas"), ctx = c.getContext("2d"), text = qrText();
     if (typeof qrcode === "undefined" || !text) return;
 
-    const custom = $("q-text").value.trim() !== "";
     const site = state.Sites.find((r) => r.v[0] === text);
-    const label = $("q-label").checked && !custom && site;
+    const label = $("q-label").checked && site;
     const size = 800, pad = 40;
 
     const qr = qrcode(0, "H");          // "H" = highest error correction, so the logo can cover the middle
@@ -273,7 +272,7 @@ function downloadQr() {
     a.click();
 }
 
-["q-site", "q-text", "q-label"].forEach((id) => $(id).addEventListener("input", drawQr));
+["q-site", "q-label"].forEach((id) => $(id).addEventListener("input", drawQr));
 
 // ---------- Start ----------
 $("who").innerText = "Logged in as " + (sessionStorage.getItem("adminName") || "Admin");
