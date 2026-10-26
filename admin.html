@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Site Attendance</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <header>
+        <img src="company%20logo1.png" alt="i-Glaze Limited" class="logo">
+        <div class="title"><h1>Admin Dashboard</h1><span id="who"></span></div>
+        <button class="ghost" onclick="logout()">Log out</button>
+    </header>
+
+    <nav>
+        <button data-tab="hours" class="active">Hours</button>
+        <button data-tab="Users">Users</button>
+        <button data-tab="Sites">Sites</button>
+    </nav>
+
+    <main>
+        <section id="hours">
+            <div class="bar">
+                <label>From <input type="date" id="f-from"></label>
+                <label>To <input type="date" id="f-to"></label>
+                <label>Employee <input type="text" id="f-emp" placeholder="Filter by name"></label>
+                <label class="chk"><input type="checkbox" id="f-failed"> Show failed attempts</label>
+                <button onclick="loadHours()">Load</button>
+                <button class="ghost" onclick="exportCsv()">Export CSV</button>
+            </div>
+            <div id="summary" class="chips"></div>
+            <div class="scroll"><table id="t-hours"></table></div>
+        </section>
+
+        <section id="Users" hidden>
+            <div class="bar"><button onclick="openEdit('Users', 0)">+ Add user</button></div>
+            <div class="scroll"><table id="t-Users"></table></div>
+        </section>
+
+        <section id="Sites" hidden>
+            <div class="bar"><button onclick="openEdit('Sites', 0)">+ Add site</button></div>
+            <div class="scroll"><table id="t-Sites"></table></div>
+        </section>
+    </main>
+
+    <dialog id="dlg">
+        <h2 id="dt"></h2>
+        <div id="df"></div>
+        <p id="de" class="err"></p>
+        <div class="btns"><button id="ds">Save</button><button class="ghost" onclick="dlg.close()">Cancel</button></div>
+    </dialog>
+
+    <footer>&copy; <span id="yr"></span> i-Glaze Limited. All rights reserved. Built by Karl Harris</footer>
+    <script src="admin.js"></script>
+</body>
+</html>
