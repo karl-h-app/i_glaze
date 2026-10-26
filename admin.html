@@ -17,6 +17,7 @@
         <button data-tab="hours" class="active">Hours</button>
         <button data-tab="Users">Users</button>
         <button data-tab="Sites">Sites</button>
+        <button data-tab="qr">QR Codes</button>
     </nav>
 
     <main>
@@ -42,6 +43,17 @@
             <div class="bar"><button onclick="openEdit('Sites', 0)">+ Add site</button></div>
             <div class="scroll"><table id="t-Sites"></table></div>
         </section>
+
+        <section id="qr" hidden>
+            <div class="bar">
+                <label>Site <select id="q-site"></select></label>
+                <label>Or custom text <input type="text" id="q-text" placeholder="Leave blank to use the Site ID"></label>
+                <label class="chk"><input type="checkbox" id="q-label" checked> Show site name under code</label>
+                <button onclick="downloadQr()">Download PNG</button>
+            </div>
+            <canvas id="q-canvas"></canvas>
+            <p class="note">The code contains only the Site ID as plain text. Always test-scan a printed code before putting it up.</p>
+        </section>
     </main>
 
     <dialog id="dlg">
@@ -52,6 +64,7 @@
     </dialog>
 
     <footer>&copy; <span id="yr"></span> i-Glaze Limited. All rights reserved. Built by Karl Harris</footer>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>
