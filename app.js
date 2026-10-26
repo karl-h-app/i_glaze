@@ -3,6 +3,18 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMkTuDRTMRfSy6
 // If nobody scans anything for this long, the PIN is cleared and the PIN screen returns.
 const IDLE_LIMIT_MS = 2 * 60 * 1000;
 
+// --- Version (change APP_VERSION on every release, and the ?v= numbers in the HTML) ---
+const APP_VERSION = "1.0.0";
+let lastScriptV = "";
+
+function showVersion(scriptV) {
+    const el = document.getElementById("version-line");
+    if (!el) return;
+    if (scriptV) lastScriptV = scriptV;
+    el.textContent = "Page v" + APP_VERSION + (lastScriptV ? " | Script v" + lastScriptV : "");
+    el.classList.toggle("mismatch", !!lastScriptV && lastScriptV !== APP_VERSION);
+}
+
 let enteredPin = "";
 let currentAction = "Check-In";
 let html5QrCode = null;
@@ -19,7 +31,9 @@ async function callBackend(payload) {
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
     });
-    return res.json();
+    const data = await res.json();
+    showVersion(data.version);
+    return data;
 }
 
 // --- Idle timeout / log out ---
@@ -326,3 +340,5 @@ document.addEventListener("keydown", (e) => {
 
 // --- Footer year ---
 document.getElementById("footer-year").innerText = new Date().getFullYear();
+
+showVersion();
