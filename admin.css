@@ -49,3 +49,5 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 1;
 }
+
+td a { color: #38bdf8; }
